@@ -84,10 +84,7 @@
       try {
         const response = await fetch(endpointUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
+          headers: requestHeaders,
           body: JSON.stringify(payload)
         });
         if (!response.ok) {
