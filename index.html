@@ -1,60 +1,105 @@
-// 1. Build your request payload:
-const requestBody = JSON.stringify({
-  input_data: {
-    columns: [
-      "island",
-      "bill_length_mm",
-      "bill_depth_mm",
-      "flipper_length_mm",
-      "body_mass_g",
-      "sex"
-    ],
-    index: [0],
-    data: [
-      [
-        "Torgersen",  // island
-        39.1,         // bill_length_mm
-        18.7,         // bill_depth_mm
-        181,          // flipper_length_mm
-        3750,         // body_mass_g
-        "male"        // sex
-      ]
-    ]
-  }
-});
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Penguin Species Predictor</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    form { max-width: 400px; }
+    label { display: block; margin-top: 1em; }
+    input, select { width: 100%; padding: 0.5em; margin-top: 0.5em; }
+    button { margin-top: 1em; padding: 0.7em 1.2em; }
+    #result { margin-top: 1em; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Penguin Species Predictor</h1>
+  <form id="predict-form">
+    <label>Island
+      <select name="island">
+        <option value="Torgersen">Torgersen</option>
+        <option value="Dream">Dream</option>
+        <option value="Biscoe">Biscoe</option>
+      </select>
+    </label>
+    <label>Bill Length (mm)
+      <input type="number" name="bill_length_mm" step="0.1" required />
+    </label>
+    <label>Bill Depth (mm)
+      <input type="number" name="bill_depth_mm" step="0.1" required />
+    </label>
+    <label>Flipper Length (mm)
+      <input type="number" name="flipper_length_mm" required />
+    </label>
+    <label>Body Mass (g)
+      <input type="number" name="body_mass_g" required />
+    </label>
+    <label>Sex
+      <select name="sex">
+        <option value="male">male</option>
+        <option value="female">female</option>
+      </select>
+    </label>
+    <button type="submit">Predict</button>
+  </form>
+  <div id="result"></div>
 
-// 2. Headers (replace with your key)
-const requestHeaders = new Headers({
-  "Content-Type": "application/json",
-  "Authorization": "Bearer <FqE3UP2yZYpibSOnx2y6EEjVXqmEPi0sWYfLxYY087s81lR5wa6dJQQJ99BEAAAAAAAAAAAAINFRAZML3q9l>"
-});
-// target that specific deployment (optional)
-requestHeaders.append("azureml-model-deployment", "penguinpredictmodel-1");
+  <script>
+    // Update with your endpoint URL and key:
+    const requestHeaders = new Headers();
+    const endpointUrl = 'https://penguinpredictionwg-ezwyd.westus.inference.ml.azure.com/score';
+    const apiKey = 'FqE3UP2yZYpibSOnx2y6EEjVXqmEPi0sWYfLxYY087s81lR5wa6dJQQJ99BEAAAAAAAAAAAAINFRAZML3q9l';
+    requestHeaders.append("Content-Type", "application/json");
+    requestHeaders.append("Authorization", `Bearer ${apiKey}`);
+    requestHeaders.append("azureml-model-deployment", "penguinpredictmodel-1");
 
-// 3. Full scoring URL (note the api-version)
-const url =
-  "https://penguinpredictionwg-ezwyd.westus.inference.ml.azure.com/score?api-version=2024-06-01";
 
-// 4. Fire the request
-fetch(url, {
-  method: "POST",
-  headers: requestHeaders,
-  body: requestBody
-})
-  .then(async (response) => {
-    if (!response.ok) {
-      // grab request ID & timestamp from headers if you need them
-      console.debug("Request ID:", response.headers.get("x-ms-request-id"));
-      console.debug("Timestamp:", response.headers.get("x-ms-date"));
-      const errorText = await response.text();
-      throw new Error(`Status ${response.status}: ${errorText}`);
-    }
-    return response.json();
-  })
-  .then((json) => {
-    console.log("Prediction result:", json);
-    // e.g. json.predictions or json[0] depending on your scoring script
-  })
-  .catch((error) => {
-    console.error("Invocation error:", error);
-  });
+    document.getElementById('predict-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const payload = {
+        input_data: {
+          columns: [
+            'island',
+            'bill_length_mm',
+            'bill_depth_mm',
+            'flipper_length_mm',
+            'body_mass_g',
+            'sex'
+          ],
+          index: [0],
+          data: [[
+            formData.get('island'),
+            parseFloat(formData.get('bill_length_mm')),
+            parseFloat(formData.get('bill_depth_mm')),
+            parseInt(formData.get('flipper_length_mm')),
+            parseInt(formData.get('body_mass_g')),
+            formData.get('sex')
+          ]]
+        }
+      };
+      requestHeaders.append("azureml-model-deployment", "penguinpredictmodel-1");
+      try {
+        const response = await fetch(endpointUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const result = await response.json();
+        document.getElementById('result').textContent =
+          'Predicted species: ' + JSON.stringify(result.predictions || result);
+      } catch (err) {
+        document.getElementById('result').textContent = 'Error: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
