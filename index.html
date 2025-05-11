@@ -80,7 +80,17 @@
           ]]
         }
       };
-      requestHeaders.append("azureml-model-deployment", "penguinpredictmodel-1");
+      console.log("🛠️ About to call endpoint:");
+      console.log("  URL:", endpointUrl);
+      console.log("  Headers:", {
+      "Content-Type":             "application/json",
+      "Authorization":            `Bearer ${apiKey}`,
+      "azureml-model-deployment": "penguinpredictmodel-1",
+      });
+      console.log("  Payload:", JSON.stringify(payload, null, 2));
+
+
+
       try {
         const response = await fetch(endpointUrl, {
           method: 'POST',
