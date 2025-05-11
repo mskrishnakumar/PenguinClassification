@@ -44,7 +44,20 @@
     <button type="submit">Predict</button>
   </form>
   <div id="result"></div>
-
+  <cors allow-credentials="true">
+    <allowed-origins>
+        <!-- Localhost useful for development -->
+        <origin>http://localhost:8080/</origin>
+        <origin>https://wonderful-pond-08f37041e.6.azurestaticapps.net/</origin>
+    </allowed-origins>
+    <allowed-methods preflight-result-max-age="300">
+        <method>POST</method>
+    </allowed-methods>
+    <allowed-headers>
+        <header>content-type</header>
+        <header>accept</header>
+    </allowed-headers>
+</cors>
   <script>
     // Update with your endpoint URL and key:
     const requestHeaders = new Headers();
